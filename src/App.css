@@ -29,7 +29,7 @@ body {
 }
 .app__stats {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
 }
 .app__left {
   flex: 0.9;
@@ -65,5 +65,9 @@ body {
 @media (max-width: 990px) {
   .app {
     flex-direction: column;
+  }
+  .app__right {
+    width: 100%;
+    margin-top: 20px;
   }
 }

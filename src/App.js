@@ -14,7 +14,7 @@ import { sortData, prettyPrintStat } from './util';
 import LineGraph from './LineGraph';
 import 'leaflet/dist/leaflet.css';
 
-function App() {
+const App = () => {
   const [countries, setCountries] = useState([]);
   const [country, setCountry] = useState('worldwide');
   const [countryInfo, setCountryInfo] = useState({});
@@ -32,10 +32,9 @@ function App() {
         setCountryInfo(data);
       });
   }, []);
-
+  /**Load corona virus cases of all countires and arrange them in descending order */
   useEffect(() => {
     //The code inside here will run once when the component loads and not again after that
-
     const getCountriesdata = async () => {
       await fetch('https://disease.sh/v3/covid-19/countries')
         .then((response) => response.json())
@@ -44,10 +43,10 @@ function App() {
             name: country.country,
             value: country.countryInfo.iso2,
           }));
+          setCountries(countries);
           const sortedData = sortData(data);
           setTableData(sortedData);
-          setMapCountries({ data });
-          setCountries(countries);
+          setMapCountries(data);
         });
     };
     getCountriesdata();
@@ -55,24 +54,26 @@ function App() {
 
   const onCountryChange = async (event) => {
     const countryCode = event.target.value;
-    // setCountry(countryCode);
+    setCountry(countryCode);
     const url =
       countryCode === 'worldwide'
         ? 'https://disease.sh/v3/covid-19/all'
         : `https://disease.sh/v3/covid-19/countries/${countryCode}`;
+
     await fetch(url)
       .then((response) => response.json())
       .then((data) => {
+        console.log(data);
         // all the data from country response
         setCountry(countryCode);
         setCountryInfo(data);
-
-        setMapCenter([data.countryInfo.lat, data.countryInfo.long]);
-
-        setMapZoom(4);
+        if (countryCode !== 'worldwide') {
+          setMapCenter([data.countryInfo.lat, data.countryInfo.long]);
+          setMapZoom(4);
+        }
       });
   };
-  //   console.log(countryInfo);
+  console.log(countryInfo);
 
   return (
     <div className="app">
@@ -96,20 +97,20 @@ function App() {
 
         <div className="app__stats">
           <InfoBox
-            onClick={(e) => setCasesType('cases')}
-            title="coronavirus Cases"
             isRed
             active={casesType === 'cases'}
+            onClick={(e) => setCasesType('cases')}
+            title="coronavirus Cases"
             cases={prettyPrintStat(countryInfo.todayCases)}
-            total={prettyPrintStat(countryInfo.casesPerOneMillion)}
+            total={prettyPrintStat(countryInfo.cases)}
           />
 
           <InfoBox
+            active={casesType === 'recovered'}
             onClick={(e) => setCasesType('recovered')}
             title="Recovered"
-            active={casesType === 'recovered'}
             cases={prettyPrintStat(countryInfo.todayRecovered)}
-            total={prettyPrintStat(countryInfo.recoveredPerOneMillion)}
+            total={prettyPrintStat(countryInfo.recovered)}
           />
 
           <InfoBox
@@ -118,9 +119,10 @@ function App() {
             onClick={(e) => setCasesType('deaths')}
             title="Deaths"
             cases={prettyPrintStat(countryInfo.todayDeaths)}
-            total={prettyPrintStat(countryInfo.deathsPerOneMillion)}
+            total={prettyPrintStat(countryInfo.deaths)}
           />
         </div>
+
         <Map
           casesType={casesType}
           countries={mapCountries}
@@ -130,14 +132,14 @@ function App() {
       </div>
       <Card className="app__right">
         <CardContent>
-          <h3>Live cases by Country</h3>
+          <h2>Live cases in every Country</h2>
           <Table countries={tableData} />
-          <h3 className="app__graphTitle">Worldwide new {casesType}</h3>
+          <h2 className="app__graphTitle">Live Graph of {casesType}</h2>
           <LineGraph className="app__graph" casesType={casesType} />
         </CardContent>
       </Card>
     </div>
   );
-}
+};
 
 export default App;
